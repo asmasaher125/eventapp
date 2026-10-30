@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html><head><meta charset='utf-8'><title>Event Hub</title>
+<style>body{font-family:Arial;max-width:800px;margin:20px auto;padding:0 10px}.card{border:1px solid #ccc;border-radius:8px;padding:12px;margin:10px 0}button{padding:6px 12px;cursor:pointer}input{padding:6px;margin:4px 0;width:100%;box-sizing:border-box}</style></head>
+<body>
+<h1>Event Hub - Version 1</h1>
+<h2>Upcoming events</h2><div id='events'>Loading...</div>
+<div id='detail'></div>
+<script>
+async function load() {
+  const list = await (await fetch('/api/events')).json();
+  document.getElementById('events').innerHTML = list.map(e =>
+    `<div class='card'><h3>${e.title}</h3><p>${e.date} - ${e.location}</p><button data-id='${e._id}'>Details and Register</button></div>`).join('');
+}
+async function show(id) {
+  const e = await (await fetch('/api/events/' + id)).json();
+  document.getElementById('detail').innerHTML =
+    `<div class='card'><h2>${e.title}</h2><p>${e.description}</p><p>Date: ${e.date} | Location: ${e.location} | Seats: ${e.seats}</p>` +
+    `<input id='name' placeholder='Your name'><input id='email' placeholder='Your email'><button id='reg' data-event='${e._id}'>Register</button><p id='msg'></p></div>`;
+}
+document.addEventListener('click', async ev => {
+  if (ev.target.dataset.id) show(ev.target.dataset.id);
+  if (ev.target.id === 'reg') {
+    const body = { eventId: ev.target.dataset.event, name: document.getElementById('name').value, email: document.getElementById('email').value };
+    const r = await fetch('/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    document.getElementById('msg').innerText = r.ok ? 'Registered successfully!' : 'Please fill in all fields.';
+  }
+});
+load();
+</script>
+</body></html>
